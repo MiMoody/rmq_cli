@@ -5,7 +5,7 @@
 ### Пример использования
 
 ```bash
-pip install git+https://github.com/MiMoody/rmq_client.git
+pip install git+https://github.com/MiMoody/rmq_cli.git
 ```
 
 ```python

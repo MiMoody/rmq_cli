@@ -25,7 +25,7 @@ SETTINGS_QUEUES = {
     )
 }
 
-rmq_client = RMQClient()
+rmq_client = RMQClient[RMQExchange, RMQQueue]()
 
 async def observe_task(body: bytes):
     ...

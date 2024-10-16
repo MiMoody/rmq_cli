@@ -9,7 +9,7 @@ pip install git+https://github.com/MiMoody/rmq_cli.git
 ```
 
 ```python
-from rmq_client import RMQClient, QueueSetting
+from rmq_cli import RMQClient, QueueSetting
 
 class RMQExchange(Enum):
     PAYMENT = "payment_exchange"

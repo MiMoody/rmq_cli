@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import partial
 from typing import Callable, Coroutine, TypeVar, Generic, Dict, cast
-import asyncio
 
 import orjson
 from aio_pika import connect_robust, Message
@@ -38,7 +37,6 @@ class RMQClient(Generic[TExchange, TQueue]):
     _channel: AbstractRobustChannel
     _exchanges: dict[TExchange, AbstractExchange]
     _queues: dict[TQueue, AbstractQueue]
-    _semaphore: asyncio.Semaphore
 
     async def init(
         self,
@@ -47,7 +45,6 @@ class RMQClient(Generic[TExchange, TQueue]):
         username: str,
         password: str,
         queue_settings: Dict[TQueue, QueueSetting[TExchange]],
-        max_concurrent_task: int = 100,
     ) -> None:
         self._host = host
         self._port = port
@@ -56,7 +53,6 @@ class RMQClient(Generic[TExchange, TQueue]):
         self._exchanges = {}
         self._queues = {}
         self._queue_settings: Dict[TQueue, QueueSetting[TExchange]] = queue_settings
-        self._semaphore = asyncio.Semaphore(value=max_concurrent_task)
         self._connection = await connect_robust(
             host=self._host,
             port=self._port,
@@ -114,8 +110,7 @@ class RMQClient(Generic[TExchange, TQueue]):
         incoming_message: AbstractIncomingMessage,
     ) -> None:
         try:
-            async with self._semaphore:
-                await callback(incoming_message.body)
+            await callback(incoming_message.body)
             await incoming_message.ack()
         except:
             await incoming_message.reject()
@@ -125,11 +120,8 @@ class RMQClient(Generic[TExchange, TQueue]):
         incoming_message: AbstractIncomingMessage,
         callback: Callable[[bytes], Coroutine],
     ) -> None:
-        await self._semaphore.acquire()
-        asyncio.create_task(
-            coro=self.__process_callback(
-                callback=callback, incoming_message=incoming_message
-            )
+        await self.__process_callback(
+            callback=callback, incoming_message=incoming_message
         )
 
     async def consume(
